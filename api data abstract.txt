@@ -1,0 +1,25 @@
+Source = Json.Document(
+        Web.Contents(
+            "https://api.data.gov.in/resource/" & RES ,
+            [
+                ApiKeyName = "api-key",
+                Query =[
+                    format = "json",
+                    offset = "0",
+                    limit = "100"
+                ]
+            ]
+
+        )
+    ),
+    total = Number.RoundDown(Source[total]/Number.FromText(Source[limit])),
+    iter = {0..total},
+    iterlist = Table.FromList(iter, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Multiplied Column" = Table.TransformColumns(iterlist, {{"Column1", each _ * Number.FromText(Source[limit]), type number}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Multiplied Column",{{"Column1", type text}}),
+    #"Invoked Custom Function" = Table.AddColumn(#"Changed Type", "finalOutput", each finalOutput("10")),
+    #"Removed Columns" = Table.RemoveColumns(#"Invoked Custom Function",{"Column1"}),
+    finalOutput1 = #"Removed Columns"[finalOutput],
+    combo = Table.Combine(finalOutput1)
+in
+    combo
